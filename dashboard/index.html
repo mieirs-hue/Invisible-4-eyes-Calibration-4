@@ -223,6 +223,18 @@
             font-size: 0.76rem;
         }
 
+        .tiny.trend-up {
+            color: #2ea043;
+        }
+
+        .tiny.trend-down {
+            color: #da3633;
+        }
+
+        .tiny.trend-flat {
+            color: #8b949e;
+        }
+
         .system-status {
             font-size: 0.9rem;
             color: #40e0d0;
@@ -283,8 +295,8 @@
                 <input type="range" min="0.2" max="2.0" step="0.01" value="1.00" id="slide-rf-gain" title="RF Gain">
             </div>
             <div class="slider-group">
-                <label>Confidence Threshold <span id="val-confidence-threshold">0.82</span></label>
-                <input type="range" min="0.20" max="0.99" step="0.01" value="0.82" id="slide-confidence-threshold" title="Confidence Threshold">
+                <label>Confidence Threshold <span id="val-confidence-threshold">0.35</span></label>
+                <input type="range" min="0.20" max="0.99" step="0.01" value="0.35" id="slide-confidence-threshold" title="Confidence Threshold">
             </div>
             <div class="slider-group">
                 <label>North Boost (dB) <span id="val-boost-north">0.0</span></label>
@@ -337,12 +349,25 @@
             <div class="telemetry-box">
                 <div class="row"><span class="label">Fusion Score</span><span class="value" id="fusion-score">0%</span></div>
                 <div class="row"><span class="label">Target (ft)</span><span class="value" id="target-pos">x:0.00 y:3.00 z:0.00</span></div>
+                <div class="row"><span class="label">Tracker Mode</span><span class="value" id="tracker-mode">-</span></div>
+                <div class="row"><span class="label">Motion Speed</span><span class="value" id="motion-speed">0.00 ft/s</span></div>
                 <div class="row"><span class="label">NW Radius</span><span class="value" id="rad-nw">0.00 ft</span></div>
                 <div class="row"><span class="label">NE Radius</span><span class="value" id="rad-ne">0.00 ft</span></div>
                 <div class="row"><span class="label">SW Radius</span><span class="value" id="rad-sw">0.00 ft</span></div>
                 <div class="row"><span class="label">SE Radius</span><span class="value" id="rad-se">0.00 ft</span></div>
                 <div class="row"><span class="label">Confirmed Nodes</span><span class="value" id="confirmed-nodes">-</span></div>
+                <div class="tiny" id="rf-gain-helper">RF Gain helper: balanced response.</div>
+                <div class="tiny" id="confidence-helper">Confidence helper: moderate filtering.</div>
                 <div class="tiny">Control sliders send CALIBRATION_UPDATE commands to Jetson in real time.</div>
+            </div>
+
+            <div class="telemetry-box section-gap-top">
+                <div class="row"><span class="label">ESP32 Focus MAC</span><span class="value" id="focus-mac">-</span></div>
+                <div class="row"><span class="label">NW Strength</span><span class="value" id="strength-nw">0.000</span></div>
+                <div class="row"><span class="label">NE Strength</span><span class="value" id="strength-ne">0.000</span></div>
+                <div class="row"><span class="label">SW Strength</span><span class="value" id="strength-sw">0.000</span></div>
+                <div class="row"><span class="label">SE Strength</span><span class="value" id="strength-se">0.000</span></div>
+                <div class="tiny" id="strength-trend-note">Strength trend: awaiting live tracking...</div>
             </div>
 
             <div class="telemetry-box section-gap-top">
@@ -397,11 +422,21 @@
             replayStopButton: document.getElementById("btn-replay-stop"),
             fusionScore: document.getElementById("fusion-score"),
             targetPos: document.getElementById("target-pos"),
+            trackerMode: document.getElementById("tracker-mode"),
+            motionSpeed: document.getElementById("motion-speed"),
             radNW: document.getElementById("rad-nw"),
             radNE: document.getElementById("rad-ne"),
             radSW: document.getElementById("rad-sw"),
             radSE: document.getElementById("rad-se"),
             confirmedNodes: document.getElementById("confirmed-nodes"),
+            rfGainHelper: document.getElementById("rf-gain-helper"),
+            confidenceHelper: document.getElementById("confidence-helper"),
+            focusMac: document.getElementById("focus-mac"),
+            strengthNW: document.getElementById("strength-nw"),
+            strengthNE: document.getElementById("strength-ne"),
+            strengthSW: document.getElementById("strength-sw"),
+            strengthSE: document.getElementById("strength-se"),
+            strengthTrendNote: document.getElementById("strength-trend-note"),
             viewModeNote: document.getElementById("view-mode-note"),
             pipeSerial: document.getElementById("pipe-serial"),
             pipeQueue: document.getElementById("pipe-queue"),
@@ -422,6 +457,12 @@
 
         let trackingSmoothness = 0.40;
         let rssiSensitivity = 0.75;
+        let previousStrengths = {
+            north: null,
+            east: null,
+            south: null,
+            west: null
+        };
 
         const calibrationState = {
             rfGain: Number(ui.rfGainSlider.value),
@@ -469,6 +510,10 @@
         };
 
         const setSliderReadouts = () => {
+            const gainRatio = clamp((calibrationState.rfGain - 0.2) / 1.8, 0, 1);
+            rssiSensitivity = 0.45 + (gainRatio * 1.05);
+            trackingSmoothness = 0.75 - (gainRatio * 0.45);
+
             ui.rfGainValue.textContent = calibrationState.rfGain.toFixed(2);
             ui.confidenceThresholdValue.textContent = calibrationState.confidenceThreshold.toFixed(2);
             ui.northBoostValue.textContent = calibrationState.nodeOffsetsDb.north.toFixed(1);
@@ -477,9 +522,65 @@
             ui.westBoostValue.textContent = calibrationState.nodeOffsetsDb.west.toFixed(1);
             ui.replaySpeedValue.textContent = `${modeState.playbackSpeed.toFixed(2)}x`;
             ui.replayProgressValue.textContent = `${modeState.positionSec.toFixed(1)} / ${modeState.durationSec.toFixed(1)} sec`;
+
+            if (calibrationState.rfGain < 0.7) {
+                ui.rfGainHelper.textContent = "RF Gain helper: softer motion response, less jitter.";
+            } else if (calibrationState.rfGain <= 1.2) {
+                ui.rfGainHelper.textContent = "RF Gain helper: balanced response for office walk tests.";
+            } else {
+                ui.rfGainHelper.textContent = "RF Gain helper: aggressive response, can saturate weak signals.";
+            }
+
+            if (calibrationState.confidenceThreshold < 0.35) {
+                ui.confidenceHelper.textContent = "Confidence helper: high sensitivity, shows subtle movement.";
+            } else if (calibrationState.confidenceThreshold <= 0.75) {
+                ui.confidenceHelper.textContent = "Confidence helper: moderate filtering with stable motion.";
+            } else {
+                ui.confidenceHelper.textContent = "Confidence helper: strict filtering, only strong updates pass.";
+            }
+
             if (modeState.durationSec > 0) {
                 const pct = clamp((modeState.positionSec / modeState.durationSec) * 100, 0, 100);
                 ui.replaySeekSlider.value = pct.toFixed(2);
+            }
+        };
+
+        const updateStrengthValue = (element, nodeKey, value) => {
+            const prev = previousStrengths[nodeKey];
+            const delta = prev === null ? 0 : value - prev;
+            const direction = Math.abs(delta) < 0.004 ? "flat" : (delta > 0 ? "up" : "down");
+            const arrow = direction === "up" ? "↑" : (direction === "down" ? "↓" : "→");
+            const deltaText = prev === null ? "init" : `${delta >= 0 ? "+" : ""}${delta.toFixed(3)}`;
+            element.textContent = `${value.toFixed(3)} ${arrow} ${deltaText}`;
+            element.classList.remove("trend-up", "trend-down", "trend-flat");
+            element.classList.add(`trend-${direction}`);
+            previousStrengths[nodeKey] = value;
+            return direction;
+        };
+
+        const updateStrengthPanel = (nodeStrengths, focusMac) => {
+            const strengths = nodeStrengths || {};
+            const east = Number(strengths.east ?? 0);
+            const north = Number(strengths.north ?? 0);
+            const south = Number(strengths.south ?? 0);
+            const west = Number(strengths.west ?? 0);
+
+            ui.focusMac.textContent = focusMac || "-";
+            const directions = [
+                updateStrengthValue(ui.strengthNW, "east", east),
+                updateStrengthValue(ui.strengthNE, "north", north),
+                updateStrengthValue(ui.strengthSW, "south", south),
+                updateStrengthValue(ui.strengthSE, "west", west)
+            ];
+
+            const upCount = directions.filter((dir) => dir === "up").length;
+            const downCount = directions.filter((dir) => dir === "down").length;
+            if (upCount >= 2) {
+                ui.strengthTrendNote.textContent = "Strength trend: signal pressure increasing near moving target.";
+            } else if (downCount >= 2) {
+                ui.strengthTrendNote.textContent = "Strength trend: signal pressure decreasing from target path.";
+            } else {
+                ui.strengthTrendNote.textContent = "Strength trend: mixed node response while target is in motion.";
             }
         };
 
@@ -870,6 +971,11 @@
                         ui.replayToggle.checked = modeState.state === "REPLAY";
                         setSliderReadouts();
                     }
+
+                    updateStrengthPanel(target.node_strengths || {}, target.focus_mac || null);
+                    const holdState = target.hold_state || {};
+                    ui.trackerMode.textContent = holdState.mode || "LOCK";
+                    ui.motionSpeed.textContent = `${Number(holdState.motion_ft_s ?? 0).toFixed(2)} ft/s`;
 
                     const targetConfidence = Number(target.confidence ?? 0);
                     if (targetConfidence < calibrationState.confidenceThreshold) {

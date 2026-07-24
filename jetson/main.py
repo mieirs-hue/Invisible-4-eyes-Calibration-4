@@ -77,6 +77,7 @@ class ReplayInjector:
                     continue
                 if packet.get("node") not in VISUAL_NODE_POSITIONS:
                     continue
+
                 if "rssi" not in packet:
                     continue
                 loaded.append(packet)
@@ -284,8 +285,40 @@ def _compute_node_packet_rates(telemetry_state_nodes, previous_counts, sample_se
     return rates
 
 
+def _select_focus_mac(window_packets):
+    by_mac = {}
+    for packet in window_packets:
+        if "status" in packet or "heartbeat" in packet:
+            continue
+
+        node_name = packet.get("node")
+        mac = packet.get("mac")
+        rssi = packet.get("rssi")
+        if node_name not in VISUAL_NODE_POSITIONS or not mac or rssi is None:
+            continue
+
+        bucket = by_mac.setdefault(mac, {"nodes": set(), "rssis": []})
+        bucket["nodes"].add(node_name)
+        bucket["rssis"].append(float(rssi))
+
+    best_mac = None
+    best_score = None
+    for mac, info in by_mac.items():
+        unique_nodes = len(info["nodes"])
+        sample_count = len(info["rssis"])
+        avg_rssi = sum(info["rssis"]) / max(1, sample_count)
+        # Prefer beacons simultaneously seen by multiple anchors, then stronger RSSI.
+        score = (unique_nodes, sample_count, avg_rssi)
+        if best_score is None or score > best_score:
+            best_score = score
+            best_mac = mac
+
+    return best_mac
+
+
 def estimate_tracking(window_packets, calibrator, node_packet_hz, controls, mode_state):
     node_samples = {node: [] for node in VISUAL_NODE_POSITIONS}
+    focus_mac = _select_focus_mac(window_packets)
 
     for packet in window_packets:
         if "status" in packet or "heartbeat" in packet:
@@ -293,6 +326,9 @@ def estimate_tracking(window_packets, calibrator, node_packet_hz, controls, mode
 
         node_name = packet.get("node")
         if node_name not in node_samples:
+            continue
+
+        if focus_mac and packet.get("mac") != focus_mac:
             continue
 
         node_samples[node_name].append(calibrator.calibrate(packet.get("rssi", -100), node_name))
@@ -346,7 +382,87 @@ def estimate_tracking(window_packets, calibrator, node_packet_hz, controls, mode
             "rf_gain": round(float(controls.get("rf_gain", 1.0)), 3),
             "replay_active": mode_state.get("state") == "REPLAY",
         },
+        "focus_mac": focus_mac,
     }
+
+
+def _stabilize_tracking_target(tracking_target, lock_state, now):
+    hold_timeout_sec = 1.5
+
+    if not tracking_target:
+        last_target = lock_state.get("last_target")
+        last_seen = float(lock_state.get("last_seen_at", 0.0) or 0.0)
+        if not last_target or last_seen <= 0.0:
+            return None
+
+        age_sec = now - last_seen
+        if age_sec > hold_timeout_sec:
+            lock_state["last_target"] = None
+            lock_state["position"] = None
+            lock_state["focus_mac"] = None
+            return None
+
+        held_target = dict(last_target)
+        held_confidence = float(held_target.get("confidence", 0.0))
+        confidence_decay = clamp(1.0 - ((age_sec / hold_timeout_sec) * 0.45), 0.0, 1.0)
+        held_target["confidence"] = round(held_confidence * confidence_decay, 3)
+        held_target["hold_state"] = {
+            "mode": "HOLD",
+            "age_sec": round(age_sec, 2),
+            "motion_ft_s": 0.0,
+        }
+        return held_target
+
+    raw_position = tracking_target.get("position", [0.0, 3.0, 0.0])
+    if len(raw_position) != 3:
+        raw_position = [0.0, 3.0, 0.0]
+
+    previous_position = lock_state.get("position")
+    previous_focus_mac = lock_state.get("focus_mac")
+    current_focus_mac = tracking_target.get("focus_mac")
+    same_focus = bool(previous_focus_mac and current_focus_mac and previous_focus_mac == current_focus_mac)
+
+    if previous_position is None or not same_focus:
+        smoothed_position = [float(raw_position[0]), float(raw_position[1]), float(raw_position[2])]
+        motion_ft_s = 0.0
+    else:
+        dx = float(raw_position[0]) - float(previous_position[0])
+        dy = float(raw_position[1]) - float(previous_position[1])
+        dz = float(raw_position[2]) - float(previous_position[2])
+        delta_distance = math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
+
+        if delta_distance < 0.15:
+            alpha = 0.18  # Strong hold against jitter while user is mostly stationary.
+        elif delta_distance < 0.9:
+            alpha = 0.35
+        else:
+            alpha = 0.60  # Fast zero-in when the target has clearly moved.
+
+        smoothed_position = [
+            float(previous_position[0]) + (dx * alpha),
+            float(previous_position[1]) + (dy * alpha),
+            float(previous_position[2]) + (dz * alpha),
+        ]
+
+        dt = max(0.02, now - float(lock_state.get("last_seen_at", now) or now))
+        motion_ft_s = delta_distance / dt
+
+    tracking_target["position"] = [
+        round(smoothed_position[0], 3),
+        round(smoothed_position[1], 3),
+        round(smoothed_position[2], 3),
+    ]
+    tracking_target["hold_state"] = {
+        "mode": "LOCK",
+        "age_sec": 0.0,
+        "motion_ft_s": round(motion_ft_s, 3),
+    }
+
+    lock_state["position"] = list(smoothed_position)
+    lock_state["focus_mac"] = current_focus_mac
+    lock_state["last_seen_at"] = now
+    lock_state["last_target"] = dict(tracking_target)
+    return tracking_target
 
 def main():
     logger = setup_logger()
@@ -403,6 +519,12 @@ def main():
         "show_node_spheres": True,
     }
     replay_injector = None
+    lock_state = {
+        "position": None,
+        "focus_mac": None,
+        "last_seen_at": 0.0,
+        "last_target": None,
+    }
 
     def enqueue_control_message(message):
         control_messages.put(message)
@@ -755,6 +877,7 @@ def main():
                 
                 # 6. Publish live visualization target from the current telemetry window.
                 tracking_target = estimate_tracking(window_packets, calibrator, node_packet_hz, runtime_controls, mode_state)
+                tracking_target = _stabilize_tracking_target(tracking_target, lock_state, now)
                 if tracking_target:
                     _broadcast("tracking_update", {
                         "targets": [tracking_target],
