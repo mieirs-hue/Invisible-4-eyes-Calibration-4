@@ -7,9 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 class WebSocketServer:
-    def __init__(self, host="0.0.0.0", port=8765):
+    def __init__(self, host="0.0.0.0", port=8765, on_message=None):
         self.host = host
         self.port = port
+        self.on_message = on_message
         self.clients = set()
         self.loop = asyncio.new_event_loop()
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
@@ -28,8 +29,20 @@ class WebSocketServer:
         self.clients.add(websocket)
         logger.info(f"Client connected. Total clients: {len(self.clients)}")
         try:
-            async for _ in websocket:
-                pass # We only broadcast, no need to handle incoming messages yet
+            async for raw_message in websocket:
+                if not self.on_message:
+                    continue
+
+                try:
+                    message = json.loads(raw_message)
+                except json.JSONDecodeError:
+                    logger.warning("Ignoring invalid JSON from websocket client")
+                    continue
+
+                try:
+                    self.on_message(message)
+                except Exception as error:  # pragma: no cover - defensive logging path
+                    logger.exception("Failed to process websocket client message: %s", error)
         except websockets.ConnectionClosed:
             pass
         finally:

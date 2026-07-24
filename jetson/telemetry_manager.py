@@ -48,6 +48,10 @@ class TelemetryManager:
             "websocket_clients": clients_count
         })
 
+    def set_replay_mode(self, replay_mode):
+        self.replay_mode = bool(replay_mode)
+        self.state["pipeline"]["replay_mode"] = self.replay_mode
+
     def get_snapshot(self):
         self.state["host"].update({
             "cpu_utilization": psutil.cpu_percent(),

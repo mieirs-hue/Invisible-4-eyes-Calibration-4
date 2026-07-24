@@ -112,11 +112,74 @@
             margin-bottom: 15px;
         }
 
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 7px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.84rem;
+            color: #c9d1d9;
+        }
+
         .slider-group label {
             display: flex;
             justify-content: space-between;
             font-size: 0.85rem;
             margin-bottom: 5px;
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            background: #0f141b;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 0.82rem;
+        }
+
+        .inline-btn {
+            margin-top: 8px;
+            width: 100%;
+            border: 1px solid #3a4552;
+            border-radius: 4px;
+            background: #121922;
+            color: #c9d1d9;
+            font-size: 0.78rem;
+            padding: 7px 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .inline-btn:hover {
+            border-color: #40e0d0;
+            color: #40e0d0;
+        }
+
+        .section-gap-top {
+            margin-top: 10px;
+        }
+
+        .playback-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .compact-btn {
+            margin-top: 0;
+        }
+
+        .label-gap-top {
+            margin-top: 8px;
         }
 
         input[type="range"] {
@@ -216,16 +279,59 @@
 
             <h2>Fusion Controls</h2>
             <div class="slider-group">
-                <label>Fusion Weight <span id="val-fusion">0.85</span></label>
-                <input type="range" min="0" max="1" step="0.05" value="0.85" id="slide-fusion" title="Fusion Weight">
+                <label>RF Gain <span id="val-rf-gain">1.00</span></label>
+                <input type="range" min="0.2" max="2.0" step="0.01" value="1.00" id="slide-rf-gain" title="RF Gain">
             </div>
             <div class="slider-group">
-                <label>Tracking Smoothness <span id="val-smooth">0.40</span></label>
-                <input type="range" min="0" max="1" step="0.05" value="0.40" id="slide-smooth" title="Tracking Smoothness">
+                <label>Confidence Threshold <span id="val-confidence-threshold">0.82</span></label>
+                <input type="range" min="0.20" max="0.99" step="0.01" value="0.82" id="slide-confidence-threshold" title="Confidence Threshold">
             </div>
             <div class="slider-group">
-                <label>RSSI Sensitivity <span id="val-rssi">0.75</span></label>
-                <input type="range" min="0" max="1.5" step="0.05" value="0.75" id="slide-rssi" title="RSSI Sensitivity">
+                <label>North Boost (dB) <span id="val-boost-north">0.0</span></label>
+                <input type="range" min="-5" max="5" step="0.1" value="0.0" id="slide-boost-north" title="North Boost">
+            </div>
+            <div class="slider-group">
+                <label>South Boost (dB) <span id="val-boost-south">0.0</span></label>
+                <input type="range" min="-5" max="5" step="0.1" value="0.0" id="slide-boost-south" title="South Boost">
+            </div>
+            <div class="slider-group">
+                <label>East Boost (dB) <span id="val-boost-east">0.0</span></label>
+                <input type="range" min="-5" max="5" step="0.1" value="0.0" id="slide-boost-east" title="East Boost">
+            </div>
+            <div class="slider-group">
+                <label>West Boost (dB) <span id="val-boost-west">0.0</span></label>
+                <input type="range" min="-5" max="5" step="0.1" value="0.0" id="slide-boost-west" title="West Boost">
+            </div>
+
+            <div class="checkbox-group">
+                <label>Show T1 <input type="checkbox" id="chk-t1" checked></label>
+                <label>Show T2 <input type="checkbox" id="chk-t2" checked></label>
+                <label>Show T3 <input type="checkbox" id="chk-t3" checked></label>
+                <label>Show T4 <input type="checkbox" id="chk-t4" checked></label>
+                <label>Motion Trails <input type="checkbox" id="chk-trails" checked></label>
+                <label>Confidence Ellipsoid <input type="checkbox" id="chk-ellipsoid" checked></label>
+                <label>Replay Mode <input type="checkbox" id="chk-replay"></label>
+                <label>Replay Loop <input type="checkbox" id="chk-replay-loop" checked></label>
+            </div>
+
+            <div class="slider-group section-gap-top">
+                <label>Replay Dataset</label>
+                <select id="select-replay-file" title="Replay Dataset">
+                    <option value="recorded_packets.jsonl">recorded_packets.jsonl</option>
+                </select>
+            </div>
+
+            <div class="slider-group">
+                <label>Replay Speed <span id="val-replay-speed">1.00x</span></label>
+                <input type="range" min="0.25" max="3.00" step="0.05" value="1.00" id="slide-replay-speed" title="Replay Speed">
+                <button class="inline-btn" type="button" id="btn-apply-mode">Apply Mode Settings</button>
+                <div class="playback-row">
+                    <button class="inline-btn compact-btn" type="button" id="btn-replay-play">Play</button>
+                    <button class="inline-btn compact-btn" type="button" id="btn-replay-pause">Pause</button>
+                    <button class="inline-btn compact-btn" type="button" id="btn-replay-stop">Stop</button>
+                </div>
+                <label class="label-gap-top">Replay Progress <span id="val-replay-progress">0.0 / 0.0 sec</span></label>
+                <input type="range" min="0" max="100" step="0.1" value="0" id="slide-replay-seek" title="Replay Seek">
             </div>
 
             <div class="telemetry-box">
@@ -236,7 +342,17 @@
                 <div class="row"><span class="label">SW Radius</span><span class="value" id="rad-sw">0.00 ft</span></div>
                 <div class="row"><span class="label">SE Radius</span><span class="value" id="rad-se">0.00 ft</span></div>
                 <div class="row"><span class="label">Confirmed Nodes</span><span class="value" id="confirmed-nodes">-</span></div>
-                <div class="tiny">Fusion Weight is a blend factor in the estimator (not MHz): higher means stronger reliance on geometric sphere agreement.</div>
+                <div class="tiny">Control sliders send CALIBRATION_UPDATE commands to Jetson in real time.</div>
+            </div>
+
+            <div class="telemetry-box section-gap-top">
+                <div class="row"><span class="label">Pipeline Serial</span><span class="value" id="pipe-serial">-</span></div>
+                <div class="row"><span class="label">Pipeline Queue</span><span class="value" id="pipe-queue">-</span></div>
+                <div class="row"><span class="label">Pipeline Calibration</span><span class="value" id="pipe-calibration">-</span></div>
+                <div class="row"><span class="label">Pipeline Fusion</span><span class="value" id="pipe-fusion">-</span></div>
+                <div class="row"><span class="label">Pipeline Tracker</span><span class="value" id="pipe-tracker">-</span></div>
+                <div class="row"><span class="label">Pipeline WebSocket</span><span class="value" id="pipe-websocket">-</span></div>
+                <div class="tiny" id="pipe-metrics">Awaiting telemetry...</div>
             </div>
 
             <button id="btn-top-full" class="top-view-btn" type="button">Switch To Topside View</button>
@@ -250,12 +366,35 @@
 
     <script>
         const ui = {
-            fusionWeightValue: document.getElementById("val-fusion"),
-            smoothValue: document.getElementById("val-smooth"),
-            rssiValue: document.getElementById("val-rssi"),
-            fusionWeightSlider: document.getElementById("slide-fusion"),
-            smoothSlider: document.getElementById("slide-smooth"),
-            rssiSlider: document.getElementById("slide-rssi"),
+            rfGainValue: document.getElementById("val-rf-gain"),
+            confidenceThresholdValue: document.getElementById("val-confidence-threshold"),
+            northBoostValue: document.getElementById("val-boost-north"),
+            southBoostValue: document.getElementById("val-boost-south"),
+            eastBoostValue: document.getElementById("val-boost-east"),
+            westBoostValue: document.getElementById("val-boost-west"),
+            rfGainSlider: document.getElementById("slide-rf-gain"),
+            confidenceThresholdSlider: document.getElementById("slide-confidence-threshold"),
+            northBoostSlider: document.getElementById("slide-boost-north"),
+            southBoostSlider: document.getElementById("slide-boost-south"),
+            eastBoostSlider: document.getElementById("slide-boost-east"),
+            westBoostSlider: document.getElementById("slide-boost-west"),
+            triangleT1Toggle: document.getElementById("chk-t1"),
+            triangleT2Toggle: document.getElementById("chk-t2"),
+            triangleT3Toggle: document.getElementById("chk-t3"),
+            triangleT4Toggle: document.getElementById("chk-t4"),
+            trailsToggle: document.getElementById("chk-trails"),
+            ellipsoidToggle: document.getElementById("chk-ellipsoid"),
+            replayToggle: document.getElementById("chk-replay"),
+            replayLoopToggle: document.getElementById("chk-replay-loop"),
+            replayFileSelect: document.getElementById("select-replay-file"),
+            replaySpeedSlider: document.getElementById("slide-replay-speed"),
+            replaySpeedValue: document.getElementById("val-replay-speed"),
+            replayProgressValue: document.getElementById("val-replay-progress"),
+            replaySeekSlider: document.getElementById("slide-replay-seek"),
+            applyModeButton: document.getElementById("btn-apply-mode"),
+            replayPlayButton: document.getElementById("btn-replay-play"),
+            replayPauseButton: document.getElementById("btn-replay-pause"),
+            replayStopButton: document.getElementById("btn-replay-stop"),
             fusionScore: document.getElementById("fusion-score"),
             targetPos: document.getElementById("target-pos"),
             radNW: document.getElementById("rad-nw"),
@@ -263,7 +402,14 @@
             radSW: document.getElementById("rad-sw"),
             radSE: document.getElementById("rad-se"),
             confirmedNodes: document.getElementById("confirmed-nodes"),
-            viewModeNote: document.getElementById("view-mode-note")
+            viewModeNote: document.getElementById("view-mode-note"),
+            pipeSerial: document.getElementById("pipe-serial"),
+            pipeQueue: document.getElementById("pipe-queue"),
+            pipeCalibration: document.getElementById("pipe-calibration"),
+            pipeFusion: document.getElementById("pipe-fusion"),
+            pipeTracker: document.getElementById("pipe-tracker"),
+            pipeWebsocket: document.getElementById("pipe-websocket"),
+            pipeMetrics: document.getElementById("pipe-metrics")
         };
 
         const systemStatus = document.getElementById("system-status");
@@ -274,9 +420,43 @@
             se: { led: document.getElementById("led-se"), text: document.getElementById("state-se") }
         };
 
-        let fusionWeight = Number(ui.fusionWeightSlider.value);
-        let trackingSmoothness = Number(ui.smoothSlider.value);
-        let rssiSensitivity = Number(ui.rssiSlider.value);
+        let trackingSmoothness = 0.40;
+        let rssiSensitivity = 0.75;
+
+        const calibrationState = {
+            rfGain: Number(ui.rfGainSlider.value),
+            confidenceThreshold: Number(ui.confidenceThresholdSlider.value),
+            nodeOffsetsDb: {
+                north: Number(ui.northBoostSlider.value),
+                south: Number(ui.southBoostSlider.value),
+                east: Number(ui.eastBoostSlider.value),
+                west: Number(ui.westBoostSlider.value)
+            }
+        };
+
+        const modeState = {
+            state: ui.replayToggle.checked ? "REPLAY" : "LIVE",
+            targetLogFile: ui.replayFileSelect.value || "recorded_packets.jsonl",
+            playbackSpeed: Number(ui.replaySpeedSlider.value),
+            loop: Boolean(ui.replayLoopToggle.checked),
+            paused: false,
+            positionSec: 0,
+            durationSec: 0
+        };
+
+        let websocketRttMs = 0;
+        let lastPingSentAt = 0;
+
+        const visualState = {
+            triangleVisible: {
+                T1: Boolean(ui.triangleT1Toggle.checked),
+                T2: Boolean(ui.triangleT2Toggle.checked),
+                T3: Boolean(ui.triangleT3Toggle.checked),
+                T4: Boolean(ui.triangleT4Toggle.checked)
+            },
+            trailsEnabled: Boolean(ui.trailsToggle.checked),
+            ellipsoidEnabled: Boolean(ui.ellipsoidToggle.checked)
+        };
 
         const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
         const fmt = (v) => Number(v).toFixed(2);
@@ -289,27 +469,220 @@
         };
 
         const setSliderReadouts = () => {
-            ui.fusionWeightValue.textContent = fusionWeight.toFixed(2);
-            ui.smoothValue.textContent = trackingSmoothness.toFixed(2);
-            ui.rssiValue.textContent = rssiSensitivity.toFixed(2);
+            ui.rfGainValue.textContent = calibrationState.rfGain.toFixed(2);
+            ui.confidenceThresholdValue.textContent = calibrationState.confidenceThreshold.toFixed(2);
+            ui.northBoostValue.textContent = calibrationState.nodeOffsetsDb.north.toFixed(1);
+            ui.southBoostValue.textContent = calibrationState.nodeOffsetsDb.south.toFixed(1);
+            ui.eastBoostValue.textContent = calibrationState.nodeOffsetsDb.east.toFixed(1);
+            ui.westBoostValue.textContent = calibrationState.nodeOffsetsDb.west.toFixed(1);
+            ui.replaySpeedValue.textContent = `${modeState.playbackSpeed.toFixed(2)}x`;
+            ui.replayProgressValue.textContent = `${modeState.positionSec.toFixed(1)} / ${modeState.durationSec.toFixed(1)} sec`;
+            if (modeState.durationSec > 0) {
+                const pct = clamp((modeState.positionSec / modeState.durationSec) * 100, 0, 100);
+                ui.replaySeekSlider.value = pct.toFixed(2);
+            }
         };
 
-        ui.fusionWeightSlider.addEventListener("input", () => {
-            fusionWeight = Number(ui.fusionWeightSlider.value);
-            setSliderReadouts();
+        const buildCalibrationPayload = () => ({
+            schema: "1.0.0",
+            type: "CALIBRATION_UPDATE",
+            timestamp: Date.now() / 1000,
+            parameters: {
+                rf_gain: calibrationState.rfGain,
+                confidence_threshold: calibrationState.confidenceThreshold,
+                node_offsets_db: calibrationState.nodeOffsetsDb
+            }
         });
 
-        ui.smoothSlider.addEventListener("input", () => {
-            trackingSmoothness = Number(ui.smoothSlider.value);
-            setSliderReadouts();
+        const buildSystemModePayload = () => ({
+            schema: "1.0.0",
+            type: "SYSTEM_MODE",
+            timestamp: Date.now() / 1000,
+            mode: modeState.state,
+            dataset: modeState.targetLogFile,
+            playback_speed: modeState.playbackSpeed,
+            loop: modeState.loop
         });
 
-        ui.rssiSlider.addEventListener("input", () => {
-            rssiSensitivity = Number(ui.rssiSlider.value);
+        const buildSystemModeActionPayload = (action, seekSec = null) => ({
+            schema: "1.0.0",
+            type: "SYSTEM_MODE",
+            timestamp: Date.now() / 1000,
+            mode: modeState.state,
+            dataset: modeState.targetLogFile,
+            playback_speed: modeState.playbackSpeed,
+            loop: modeState.loop,
+            replay_action: action,
+            seek_sec: seekSec
+        });
+
+        const sendCalibrationUpdate = () => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            socket.send(JSON.stringify(buildCalibrationPayload()));
+        };
+
+        const sendSystemModeUpdate = () => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            socket.send(JSON.stringify(buildSystemModePayload()));
+        };
+
+        const sendSystemModeAction = (action, seekSec = null) => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            socket.send(JSON.stringify(buildSystemModeActionPayload(action, seekSec)));
+        };
+
+        const sendPing = () => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            lastPingSentAt = Date.now();
+            socket.send(JSON.stringify({
+                schema: "1.0.0",
+                type: "PING",
+                timestamp: Date.now() / 1000
+            }));
+        };
+
+        let calibrationSendTimer = null;
+        const scheduleCalibrationSend = () => {
+            if (calibrationSendTimer) {
+                window.clearTimeout(calibrationSendTimer);
+            }
+            calibrationSendTimer = window.setTimeout(sendCalibrationUpdate, 120);
+        };
+
+        let systemModeSendTimer = null;
+        const scheduleSystemModeSend = () => {
+            if (systemModeSendTimer) {
+                window.clearTimeout(systemModeSendTimer);
+            }
+            systemModeSendTimer = window.setTimeout(sendSystemModeUpdate, 120);
+        };
+
+        ui.rfGainSlider.addEventListener("input", () => {
+            calibrationState.rfGain = Number(ui.rfGainSlider.value);
             setSliderReadouts();
+            scheduleCalibrationSend();
+        });
+
+        ui.confidenceThresholdSlider.addEventListener("input", () => {
+            calibrationState.confidenceThreshold = Number(ui.confidenceThresholdSlider.value);
+            setSliderReadouts();
+            scheduleCalibrationSend();
+        });
+
+        ui.northBoostSlider.addEventListener("input", () => {
+            calibrationState.nodeOffsetsDb.north = Number(ui.northBoostSlider.value);
+            setSliderReadouts();
+            scheduleCalibrationSend();
+        });
+
+        ui.southBoostSlider.addEventListener("input", () => {
+            calibrationState.nodeOffsetsDb.south = Number(ui.southBoostSlider.value);
+            setSliderReadouts();
+            scheduleCalibrationSend();
+        });
+
+        ui.eastBoostSlider.addEventListener("input", () => {
+            calibrationState.nodeOffsetsDb.east = Number(ui.eastBoostSlider.value);
+            setSliderReadouts();
+            scheduleCalibrationSend();
+        });
+
+        ui.westBoostSlider.addEventListener("input", () => {
+            calibrationState.nodeOffsetsDb.west = Number(ui.westBoostSlider.value);
+            setSliderReadouts();
+            scheduleCalibrationSend();
+        });
+
+        ui.replayToggle.addEventListener("change", () => {
+            modeState.state = ui.replayToggle.checked ? "REPLAY" : "LIVE";
+            scheduleSystemModeSend();
+        });
+
+        ui.replayLoopToggle.addEventListener("change", () => {
+            modeState.loop = Boolean(ui.replayLoopToggle.checked);
+            scheduleSystemModeSend();
+        });
+
+        ui.replayFileSelect.addEventListener("change", () => {
+            modeState.targetLogFile = ui.replayFileSelect.value;
+            scheduleSystemModeSend();
+        });
+
+        ui.replaySpeedSlider.addEventListener("input", () => {
+            modeState.playbackSpeed = Number(ui.replaySpeedSlider.value);
+            setSliderReadouts();
+            scheduleSystemModeSend();
+        });
+
+        ui.applyModeButton.addEventListener("click", () => {
+            sendSystemModeUpdate();
+        });
+
+        ui.replayPlayButton.addEventListener("click", () => {
+            modeState.state = "REPLAY";
+            ui.replayToggle.checked = true;
+            sendSystemModeAction("RESUME");
+        });
+
+        ui.replayPauseButton.addEventListener("click", () => {
+            sendSystemModeAction("PAUSE");
+        });
+
+        ui.replayStopButton.addEventListener("click", () => {
+            sendSystemModeAction("STOP");
+        });
+
+        ui.replaySeekSlider.addEventListener("change", () => {
+            const pct = Number(ui.replaySeekSlider.value) / 100;
+            const seekSec = modeState.durationSec * pct;
+            sendSystemModeAction("SEEK", seekSec);
+        });
+
+        ui.triangleT1Toggle.addEventListener("change", () => {
+            visualState.triangleVisible.T1 = Boolean(ui.triangleT1Toggle.checked);
+        });
+
+        ui.triangleT2Toggle.addEventListener("change", () => {
+            visualState.triangleVisible.T2 = Boolean(ui.triangleT2Toggle.checked);
+        });
+
+        ui.triangleT3Toggle.addEventListener("change", () => {
+            visualState.triangleVisible.T3 = Boolean(ui.triangleT3Toggle.checked);
+        });
+
+        ui.triangleT4Toggle.addEventListener("change", () => {
+            visualState.triangleVisible.T4 = Boolean(ui.triangleT4Toggle.checked);
+        });
+
+        ui.trailsToggle.addEventListener("change", () => {
+            visualState.trailsEnabled = Boolean(ui.trailsToggle.checked);
+            if (!visualState.trailsEnabled) {
+                clearTrailsOnly();
+            }
+        });
+
+        ui.ellipsoidToggle.addEventListener("change", () => {
+            visualState.ellipsoidEnabled = Boolean(ui.ellipsoidToggle.checked);
         });
 
         setSliderReadouts();
+
+        const confidenceToColor = (confidence) => {
+            const c = clamp(confidence, 0, 1);
+            if (c >= 0.95) return new THREE.Color(0x24f4ff);
+            if (c >= 0.80) return new THREE.Color(0x39cf73);
+            if (c >= 0.60) return new THREE.Color(0xeecb3a);
+            if (c >= 0.40) return new THREE.Color(0xea8d2e);
+            return new THREE.Color(0xe04a42);
+        };
 
         const wsPorts = [8766, 8765];
         let socket = null;
@@ -331,6 +704,38 @@
             setNodeState("se", "Offline", "red");
         };
 
+        const healthBadge = (status) => {
+            if (status === "green") return "GREEN";
+            if (status === "yellow") return "YELLOW";
+            if (status === "red") return "RED";
+            return "-";
+        };
+
+        const colorizeHealth = (element, status) => {
+            element.textContent = healthBadge(status);
+            if (status === "green") element.style.color = "#2ea043";
+            else if (status === "yellow") element.style.color = "#d29922";
+            else if (status === "red") element.style.color = "#da3633";
+            else element.style.color = "#8b949e";
+        };
+
+        const updatePipelineMonitor = (pipeline) => {
+            const health = pipeline.health || {};
+            const metrics = health.metrics || {};
+            colorizeHealth(ui.pipeSerial, health.serial);
+            colorizeHealth(ui.pipeQueue, health.queue);
+            colorizeHealth(ui.pipeCalibration, health.calibration);
+            colorizeHealth(ui.pipeFusion, health.fusion);
+            colorizeHealth(ui.pipeTracker, health.tracker);
+
+            let websocketHealth = health.websocket;
+            if (websocketRttMs > 250) websocketHealth = "red";
+            else if (websocketRttMs > 100) websocketHealth = "yellow";
+            colorizeHealth(ui.pipeWebsocket, websocketHealth);
+
+            ui.pipeMetrics.textContent = `Hz ${Number(metrics.avg_packet_hz || 0).toFixed(1)} | Stale ${Number(metrics.serial_staleness_sec || 0).toFixed(2)}s | Queue ${Number(metrics.queue_depth || 0)} | Loop ${Number(metrics.loop_latency_ms || 0).toFixed(1)} ms | RTT ${websocketRttMs.toFixed(0)} ms`;
+        };
+
         setAllNodesOffline();
 
         function connectWebSocket(index = 0) {
@@ -348,6 +753,9 @@
                 websocketConnected = true;
                 systemStatus.textContent = `[ LIVE TELEMETRY : ${wsPorts[index]} ]`;
                 systemStatus.style.color = "#40e0d0";
+                sendCalibrationUpdate();
+                sendSystemModeUpdate();
+                sendPing();
             };
 
             socket.onmessage = (event) => {
@@ -392,11 +800,79 @@
                             setNodeState(key, `Active (${packetAge} ms)`, "green");
                         }
                     });
+
+                    updatePipelineMonitor(payload.pipeline || {});
+                }
+
+                if (msg.type === "PONG") {
+                    websocketRttMs = lastPingSentAt > 0 ? Math.max(0, Date.now() - lastPingSentAt) : websocketRttMs;
+                }
+
+                if (msg.type === "control_ack") {
+                    const applied = (msg.payload && msg.payload.applied) || {};
+                    const gain = Number(applied.rf_gain ?? calibrationState.rfGain);
+                    const threshold = Number(applied.confidence_threshold ?? calibrationState.confidenceThreshold);
+                    systemStatus.textContent = `[ CTRL ACK | gain ${gain.toFixed(2)} | thr ${threshold.toFixed(2)} ]`;
+                    systemStatus.style.color = "#39cf73";
+                }
+
+                if (msg.type === "system_mode_ack") {
+                    const payload = msg.payload || {};
+                    const modePayload = payload.mode || {};
+                    const mode = modePayload.state || modeState.state;
+                    const success = Boolean(payload.success);
+                    modeState.state = mode;
+                    modeState.targetLogFile = modePayload.dataset || modeState.targetLogFile;
+                    modeState.playbackSpeed = Number(modePayload.playback_speed ?? modeState.playbackSpeed);
+                    modeState.loop = Boolean(modePayload.loop ?? modeState.loop);
+                    modeState.paused = Boolean(modePayload.paused ?? modeState.paused);
+                    modeState.positionSec = Number(modePayload.position_sec ?? modeState.positionSec);
+                    modeState.durationSec = Number(modePayload.duration_sec ?? modeState.durationSec);
+                    ui.replayToggle.checked = mode === "REPLAY";
+                    ui.replayLoopToggle.checked = modeState.loop;
+
+                    const datasets = Array.isArray(payload.datasets) ? payload.datasets : [];
+                    if (datasets.length > 0) {
+                        ui.replayFileSelect.innerHTML = "";
+                        datasets.forEach((name) => {
+                            const option = document.createElement("option");
+                            option.value = name;
+                            option.textContent = name;
+                            ui.replayFileSelect.appendChild(option);
+                        });
+                    }
+                    ui.replayFileSelect.value = modeState.targetLogFile;
+                    ui.replaySpeedSlider.value = String(modeState.playbackSpeed);
+                    setSliderReadouts();
+
+                    if (success) {
+                        systemStatus.textContent = `[ MODE ${mode} ACK ]`;
+                        systemStatus.style.color = "#40e0d0";
+                    } else {
+                        systemStatus.textContent = `[ MODE ERROR | ${payload.message || "failed"} ]`;
+                        systemStatus.style.color = "#da3633";
+                    }
                 }
 
                 if (msg.type === "tracking_update") {
                     const target = (msg.payload && msg.payload.targets && msg.payload.targets[0]) || null;
                     if (!target) {
+                        return;
+                    }
+
+                    const backendMode = msg.payload && msg.payload.system_mode && msg.payload.system_mode.state;
+                    if (backendMode === "LIVE" || backendMode === "REPLAY") {
+                        const backendModeState = msg.payload.system_mode;
+                        modeState.state = backendModeState.state;
+                        modeState.paused = Boolean(backendModeState.paused ?? modeState.paused);
+                        modeState.positionSec = Number(backendModeState.position_sec ?? modeState.positionSec);
+                        modeState.durationSec = Number(backendModeState.duration_sec ?? modeState.durationSec);
+                        ui.replayToggle.checked = modeState.state === "REPLAY";
+                        setSliderReadouts();
+                    }
+
+                    const targetConfidence = Number(target.confidence ?? 0);
+                    if (targetConfidence < calibrationState.confidenceThreshold) {
                         return;
                     }
 
@@ -407,8 +883,11 @@
                         radii.northwest ?? 0,
                         radii.northeast ?? 0,
                         radii.southwest ?? 0,
-                        radii.southeast ?? 0
+                        radii.southeast ?? 0,
+                        Number(target.confidence ?? 0)
                     );
+
+                    updateFusionLayerVisuals(target);
 
                     ui.confirmedNodes.textContent = (target.confirmed_nodes || []).map((node) => {
                         if (node === "north") return "NE";
@@ -713,6 +1192,9 @@
         };
 
         const dropBeaconTrailPoint = (x, y, z) => {
+            if (!visualState.trailsEnabled) {
+                return;
+            }
             const t = nowSeconds();
             const distanceOk = !previousTrailPoint || Math.hypot(x - previousTrailPoint.x, z - previousTrailPoint.z) > 0.22;
             const timeOk = (t - lastTrailDropAt) > 0.05;
@@ -739,6 +1221,10 @@
             Object.keys(quadrantIntensity).forEach((k) => {
                 quadrantIntensity[k] = 0;
             });
+            clearTrailsOnly();
+        };
+
+        const clearTrailsOnly = () => {
             beaconTrail.forEach((entry) => {
                 if (entry.mesh) {
                     scene.remove(entry.mesh);
@@ -792,6 +1278,7 @@
         const fsssSpheres = {};
         const beamLines = {};
         const floorFootprints = {};
+        const fusionTriangles = {};
         const nodeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
         const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
 
@@ -843,11 +1330,109 @@
             floorFootprints[config.id] = footprint;
         });
 
+        const buildTrianglePoints = (cornerIds) => cornerIds.map((cornerId) => {
+            const node = nodes[cornerId];
+            return new THREE.Vector3(node.position.x, 8.6, node.position.z);
+        });
+
+        const triangleDefs = {
+            T1: ["northwest", "northeast", "southeast"],
+            T2: ["northwest", "southwest", "southeast"],
+            T3: ["northwest", "northeast", "southwest"],
+            T4: ["northeast", "southwest", "southeast"]
+        };
+
+        Object.entries(triangleDefs).forEach(([id, corners]) => {
+            const points = buildTrianglePoints(corners);
+            const triGeometry = new THREE.BufferGeometry().setFromPoints([
+                points[0], points[1], points[2]
+            ]);
+            triGeometry.setIndex([0, 1, 2]);
+            triGeometry.computeVertexNormals();
+
+            const triFill = new THREE.Mesh(
+                triGeometry,
+                new THREE.MeshBasicMaterial({
+                    color: 0xe04a42,
+                    transparent: true,
+                    opacity: 0.12,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                })
+            );
+            scene.add(triFill);
+
+            const edgeGeometry = new THREE.BufferGeometry().setFromPoints([
+                points[0], points[1], points[2], points[0]
+            ]);
+            const triEdge = new THREE.Line(
+                edgeGeometry,
+                new THREE.LineBasicMaterial({
+                    color: 0xe04a42,
+                    transparent: true,
+                    opacity: 0.35,
+                    linewidth: 1
+                })
+            );
+            scene.add(triEdge);
+
+            fusionTriangles[id] = {
+                corners,
+                fill: triFill,
+                edge: triEdge,
+                pulsePhase: Math.random() * Math.PI * 2,
+                agreement: 0.0,
+                packetHz: 0.0,
+                confidence: 0.0
+            };
+        });
+
+        const confidenceEllipsoid = new THREE.Mesh(
+            new THREE.SphereGeometry(1, 24, 18),
+            new THREE.MeshBasicMaterial({
+                color: 0x24f4ff,
+                transparent: true,
+                opacity: 0.22,
+                wireframe: true
+            })
+        );
+        confidenceEllipsoid.position.set(0, 3, 0);
+        scene.add(confidenceEllipsoid);
+
+        const targetShadow = new THREE.Mesh(
+            new THREE.RingGeometry(0.35, 0.8, 48),
+            new THREE.MeshBasicMaterial({
+                color: 0x94a8b8,
+                transparent: true,
+                opacity: 0.18,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            })
+        );
+        targetShadow.rotation.x = -Math.PI / 2;
+        targetShadow.position.set(0, 0.02, 0);
+        scene.add(targetShadow);
+
         const targetGeometry = new THREE.SphereGeometry(0.6, 16, 16);
         const targetMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const liveBeacon = new THREE.Mesh(targetGeometry, targetMaterial);
         liveBeacon.position.set(0, 3, 0);
         scene.add(liveBeacon);
+
+        const triangleEstimateMarkers = {};
+        Object.keys(triangleDefs).forEach((id) => {
+            const marker = new THREE.Mesh(
+                new THREE.SphereGeometry(0.22, 12, 12),
+                new THREE.MeshBasicMaterial({
+                    color: 0x9ac7ff,
+                    transparent: true,
+                    opacity: 0.38
+                })
+            );
+            marker.visible = false;
+            scene.add(marker);
+            triangleEstimateMarkers[id] = marker;
+        });
 
         const updateBeamLines = () => {
             Object.entries(beamLines).forEach(([id, beam]) => {
@@ -873,7 +1458,7 @@
             floorFootprints[id].geometry = new THREE.BufferGeometry().setFromPoints(points);
         };
 
-        const updateTelemetryPanel = (radiiByNode) => {
+        const updateTelemetryPanel = (radiiByNode, fusionConfidence = 0) => {
             const entries = Object.entries(radiiByNode).map(([id, radius]) => {
                 const nodePos = nodes[id].position;
                 const dist = liveBeacon.position.distanceTo(nodePos);
@@ -882,18 +1467,9 @@
                 return { id, radius, dist, agreement };
             });
 
-            const activeCount = entries.filter((e) => e.radius > 0.1).length;
-            const avgAgreement = entries.reduce((sum, e) => sum + e.agreement, 0) / entries.length;
             const top = [...entries].sort((a, b) => b.agreement - a.agreement).slice(0, 3);
-            const topAvg = top.reduce((sum, e) => sum + e.agreement, 0) / top.length;
 
-            const fusionScore = clamp(
-                (topAvg * fusionWeight) + ((activeCount / 4) * (1 - fusionWeight)),
-                0,
-                1
-            );
-
-            ui.fusionScore.textContent = `${Math.round(fusionScore * 100)}%`;
+            ui.fusionScore.textContent = `${Math.round(clamp(fusionConfidence, 0, 1) * 100)}%`;
             ui.targetPos.textContent = `x:${fmt(liveBeacon.position.x)} y:${fmt(liveBeacon.position.y)} z:${fmt(liveBeacon.position.z)}`;
             ui.radNW.textContent = `${fmt(radiiByNode.northwest)} ft`;
             ui.radNE.textContent = `${fmt(radiiByNode.northeast)} ft`;
@@ -902,7 +1478,7 @@
             ui.confirmedNodes.textContent = top.map((e) => e.id.replace("north", "N").replace("south", "S").replace("east", "E").replace("west", "W")).join(", ");
         };
 
-        const updateFallbackTelemetryPanel = (targetX, targetZ, radiiByNode) => {
+        const updateFallbackTelemetryPanel = (targetX, targetZ, radiiByNode, fusionConfidence = 0) => {
             const nodeCoords = {
                 northwest: { x: -10, z: -5 },
                 northeast: { x: 10, z: -5 },
@@ -918,12 +1494,9 @@
                 return { id, radius, agreement };
             });
 
-            const activeCount = entries.filter((e) => e.radius > 0.1).length;
             const top = [...entries].sort((a, b) => b.agreement - a.agreement).slice(0, 3);
-            const topAvg = top.reduce((sum, e) => sum + e.agreement, 0) / Math.max(1, top.length);
-            const fusionScore = clamp((topAvg * fusionWeight) + ((activeCount / 4) * (1 - fusionWeight)), 0, 1);
 
-            ui.fusionScore.textContent = `${Math.round(fusionScore * 100)}%`;
+            ui.fusionScore.textContent = `${Math.round(clamp(fusionConfidence, 0, 1) * 100)}%`;
             ui.targetPos.textContent = `x:${fmt(targetX)} y:3.00 z:${fmt(targetZ)}`;
             ui.radNW.textContent = `${fmt(radiiByNode.northwest)} ft`;
             ui.radNE.textContent = `${fmt(radiiByNode.northeast)} ft`;
@@ -932,10 +1505,106 @@
             ui.confirmedNodes.textContent = top.map((e) => e.id.replace("north", "N").replace("south", "S").replace("east", "E").replace("west", "W")).join(", ");
         };
 
+        const opacityFromConfidence = (confidence) => {
+            const c = clamp(confidence, 0, 1);
+            if (c >= 0.95) return 1.0;
+            if (c >= 0.80) return 0.8;
+            if (c >= 0.60) return 0.6;
+            if (c >= 0.40) return 0.35;
+            return 0.15;
+        };
+
+        const lineWidthFromAgreement = (agreement) => {
+            if (agreement >= 0.90) return 5;
+            if (agreement >= 0.75) return 4;
+            if (agreement >= 0.55) return 3;
+            if (agreement >= 0.35) return 2;
+            return 1;
+        };
+
+        const pulseRateFromPacketHz = (packetHz) => {
+            if (packetHz >= 18) return 0.6;
+            if (packetHz >= 9) return 1.2;
+            if (packetHz >= 4) return 2.0;
+            if (packetHz > 0.1) return 3.0;
+            return 0;
+        };
+
+        const updateFusionLayerVisuals = (target) => {
+            const triangles = target.triangles || {};
+            const triangleEstimates = target.triangle_estimates || {};
+
+            Object.entries(fusionTriangles).forEach(([id, visual]) => {
+                const metrics = triangles[id] || { confidence: 0, agreement: 0, packet_hz: 0 };
+                visual.confidence = Number(metrics.confidence || 0);
+                visual.agreement = Number(metrics.agreement || 0);
+                visual.packetHz = Number(metrics.packet_hz || 0);
+
+                const triVisible = Boolean(visualState.triangleVisible[id]);
+                visual.fill.visible = triVisible;
+                visual.edge.visible = triVisible;
+                if (!triVisible) {
+                    return;
+                }
+
+                const color = confidenceToColor(visual.confidence);
+                visual.fill.material.color.copy(color);
+                visual.edge.material.color.copy(color);
+                visual.fill.material.opacity = opacityFromConfidence(visual.confidence) * 0.45;
+                visual.edge.material.opacity = opacityFromConfidence(visual.confidence);
+
+                const desiredLineWidth = lineWidthFromAgreement(visual.agreement);
+                visual.edge.material.linewidth = desiredLineWidth;
+            });
+
+            Object.entries(triangleEstimateMarkers).forEach(([id, marker]) => {
+                const est = triangleEstimates[id];
+                if (!Array.isArray(est) || est.length < 3) {
+                    marker.visible = false;
+                    return;
+                }
+                marker.visible = Boolean(visualState.triangleVisible[id]);
+                marker.position.set(Number(est[0]), Number(est[1]), Number(est[2]));
+            });
+
+            const ellipsoid = target.ellipsoid || { axes: [1.2, 0.6, 1.2], yaw: 0 };
+            const axes = ellipsoid.axes || [1.2, 0.6, 1.2];
+            confidenceEllipsoid.visible = visualState.ellipsoidEnabled;
+            confidenceEllipsoid.position.copy(liveBeacon.position);
+            confidenceEllipsoid.scale.set(
+                clamp(Number(axes[0] || 1.2), 0.2, 7.0),
+                clamp(Number(axes[1] || 0.6), 0.2, 4.0),
+                clamp(Number(axes[2] || 1.2), 0.2, 7.0)
+            );
+            confidenceEllipsoid.rotation.set(0, Number(ellipsoid.yaw || 0), 0);
+            confidenceEllipsoid.material.opacity = clamp(0.14 + ((1 - Number(target.confidence || 0)) * 0.26), 0.1, 0.45);
+
+            targetShadow.position.set(liveBeacon.position.x, 0.02, liveBeacon.position.z);
+            targetShadow.scale.setScalar(clamp(0.7 + ((1 - Number(target.confidence || 0)) * 1.8), 0.6, 2.8));
+            targetShadow.material.opacity = clamp(0.06 + ((1 - Number(target.confidence || 0)) * 0.18), 0.04, 0.24);
+        };
+
         function animate() {
             requestAnimationFrame(animate);
 
             const pulse = 0.76 + (0.24 * Math.sin(nowSeconds() * 8.5));
+
+            Object.values(fusionTriangles).forEach((visual) => {
+                if (!visual.edge.visible) {
+                    return;
+                }
+                const pulseRate = pulseRateFromPacketHz(visual.packetHz);
+                if (pulseRate <= 0) {
+                    visual.fill.material.opacity = 0.06;
+                    visual.edge.material.opacity = 0.12;
+                    return;
+                }
+                const phase = nowSeconds() * (Math.PI * pulseRate) + visual.pulsePhase;
+                const wave = 0.76 + (0.24 * Math.sin(phase));
+                const baseOpacity = opacityFromConfidence(visual.confidence);
+                visual.fill.material.opacity = clamp((baseOpacity * 0.35) * wave, 0.04, 0.52);
+                visual.edge.material.opacity = clamp(baseOpacity * wave, 0.08, 1.0);
+            });
 
             Object.entries(quadrantTiles).forEach(([id, tile]) => {
                 const intensity = clamp(quadrantIntensity[id] || 0, 0, 1);
@@ -964,6 +1633,10 @@
                 if (fallbackTrail[i].life <= 0) {
                     fallbackTrail.splice(i, 1);
                 }
+            }
+
+            if (!visualState.trailsEnabled) {
+                clearTrailsOnly();
             }
 
             Object.values(fsssSpheres).forEach((sphere) => {
@@ -1015,7 +1688,11 @@
             }
         }, 1000);
 
-        function updateFSSS(targetX, targetZ, radiusNW, radiusNE, radiusSW, radiusSE) {
+        setInterval(() => {
+            sendPing();
+        }, 5000);
+
+        function updateFSSS(targetX, targetZ, radiusNW, radiusNE, radiusSW, radiusSE, fusionConfidence = 0) {
             const smoothing = clamp(trackingSmoothness, 0.01, 0.95);
             const alpha = 1 - smoothing;
 
@@ -1045,7 +1722,7 @@
                     southwest: scaleSW,
                     southeast: scaleSE
                 };
-                updateFallbackTelemetryPanel(fallbackState.x, fallbackState.z, fallbackState.radii);
+                updateFallbackTelemetryPanel(fallbackState.x, fallbackState.z, fallbackState.radii, fusionConfidence);
                 drawFallbackScene();
                 return;
             }
@@ -1072,7 +1749,7 @@
                 northeast: scaleNE,
                 southwest: scaleSW,
                 southeast: scaleSE
-            });
+            }, fusionConfidence);
         }
 
         window.updateFSSS = updateFSSS;
