@@ -1,0 +1,1 @@
+# Administrator HTTP dashboard endpoints

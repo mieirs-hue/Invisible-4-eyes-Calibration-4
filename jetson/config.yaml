@@ -1,0 +1,35 @@
+nodes:
+  north:
+    port: /dev/ttyACM0
+    offset: 1.8
+    gain: 1.00
+  south:
+    port: /dev/ttyACM1
+    offset: -2.1
+    gain: 0.98
+  east:
+    port: /dev/ttyACM2
+    offset: 0.4
+    gain: 1.00
+  west:
+    port: /dev/ttyACM3
+    offset: -0.9
+    gain: 1.00
+
+pipeline:
+  time_window: 0.5
+  dbscan_eps: 0.15
+  dbscan_min_samples: 2
+  websocket_port: 8766
+
+zone_map:
+  north: Gilligan
+  south: Gadget
+  east: Kingsman Red
+  west: Matrix Green
+
+zone_multipliers:
+  Gilligan: 1.0
+  Gadget: 1.0
+  Kingsman Red: 1.0
+  Matrix Green: 1.0

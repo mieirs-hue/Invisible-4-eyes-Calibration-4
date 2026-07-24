@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invisible 4=eyes | FSSS Live Engine</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --panel-bg: #161b22;
+            --accent-turquoise: #40e0d0;
+            --accent-gold: #ffd700;
+            --text-main: #c9d1d9;
+            --led-green: #2ea043;
+            --led-red: #da3633;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--accent-turquoise);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--accent-turquoise);
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        #threejs-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        h2 {
+            color: var(--accent-gold);
+            margin-top: 0;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .led {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 5px currentColor;
+        }
+
+        .led.green {
+            background-color: var(--led-green);
+            color: var(--led-green);
+        }
+
+        .led.yellow {
+            background-color: #d29922;
+            color: #d29922;
+        }
+
+        .led.red {
+            background-color: var(--led-red);
+            color: var(--led-red);
+        }
+
+        .slider-group {
+            margin-bottom: 15px;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-turquoise);
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #30363d;
+            margin: 20px 0;
+        }
+
+        .telemetry-box {
+            margin-top: 14px;
+            padding: 10px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            background: #0f141b;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .telemetry-box .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .telemetry-box .label {
+            color: #8b949e;
+        }
+
+        .telemetry-box .value {
+            color: #c9d1d9;
+            font-weight: 600;
+        }
+
+        .tiny {
+            color: #8b949e;
+            font-size: 0.76rem;
+        }
+
+        .system-status {
+            font-size: 0.9rem;
+            color: #40e0d0;
+        }
+
+        .scene-panel {
+            padding: 0;
+            border: 2px solid #30363d;
+        }
+
+        .top-view-btn {
+            margin-top: 12px;
+            border: 1px solid #3a4552;
+            border-radius: 4px;
+            background: #121922;
+            color: #c9d1d9;
+            font-size: 0.72rem;
+            padding: 6px 8px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .top-view-btn:hover {
+            border-color: #40e0d0;
+            color: #40e0d0;
+        }
+
+        @media (max-width: 760px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+
+            .scene-panel {
+                min-height: 58vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Invisible 4=eyes Console</h1>
+        <div id="system-status" class="system-status">[ WAITING FOR LIVE TELEMETRY ]</div>
+    </div>
+
+    <div class="grid-container">
+        <div class="panel">
+            <h2>Node Status</h2>
+            <div class="status-row" id="row-nw"><span><span class="led red" id="led-nw"></span> Northwest (Kingsman)</span> <span id="state-nw">Offline</span></div>
+            <div class="status-row" id="row-ne"><span><span class="led red" id="led-ne"></span> Northeast (Gilligan)</span> <span id="state-ne">Offline</span></div>
+            <div class="status-row" id="row-sw"><span><span class="led red" id="led-sw"></span> Southwest (Gadget)</span> <span id="state-sw">Offline</span></div>
+            <div class="status-row" id="row-se"><span><span class="led red" id="led-se"></span> Southeast (Matrix)</span> <span id="state-se">Offline</span></div>
+
+            <hr>
+
+            <h2>Fusion Controls</h2>
+            <div class="slider-group">
+                <label>Fusion Weight <span id="val-fusion">0.85</span></label>
+                <input type="range" min="0" max="1" step="0.05" value="0.85" id="slide-fusion" title="Fusion Weight">
+            </div>
+            <div class="slider-group">
+                <label>Tracking Smoothness <span id="val-smooth">0.40</span></label>
+                <input type="range" min="0" max="1" step="0.05" value="0.40" id="slide-smooth" title="Tracking Smoothness">
+            </div>
+            <div class="slider-group">
+                <label>RSSI Sensitivity <span id="val-rssi">0.75</span></label>
+                <input type="range" min="0" max="1.5" step="0.05" value="0.75" id="slide-rssi" title="RSSI Sensitivity">
+            </div>
+
+            <div class="telemetry-box">
+                <div class="row"><span class="label">Fusion Score</span><span class="value" id="fusion-score">0%</span></div>
+                <div class="row"><span class="label">Target (ft)</span><span class="value" id="target-pos">x:0.00 y:3.00 z:0.00</span></div>
+                <div class="row"><span class="label">NW Radius</span><span class="value" id="rad-nw">0.00 ft</span></div>
+                <div class="row"><span class="label">NE Radius</span><span class="value" id="rad-ne">0.00 ft</span></div>
+                <div class="row"><span class="label">SW Radius</span><span class="value" id="rad-sw">0.00 ft</span></div>
+                <div class="row"><span class="label">SE Radius</span><span class="value" id="rad-se">0.00 ft</span></div>
+                <div class="row"><span class="label">Confirmed Nodes</span><span class="value" id="confirmed-nodes">-</span></div>
+                <div class="tiny">Fusion Weight is a blend factor in the estimator (not MHz): higher means stronger reliance on geometric sphere agreement.</div>
+            </div>
+
+            <button id="btn-top-full" class="top-view-btn" type="button">Switch To Topside View</button>
+            <div class="tiny" id="view-mode-note">Office mode: 3D office + FSSS spheres + red floor pulse.</div>
+        </div>
+
+        <div class="panel scene-panel">
+            <div id="threejs-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const ui = {
+            fusionWeightValue: document.getElementById("val-fusion"),
+            smoothValue: document.getElementById("val-smooth"),
+            rssiValue: document.getElementById("val-rssi"),
+            fusionWeightSlider: document.getElementById("slide-fusion"),
+            smoothSlider: document.getElementById("slide-smooth"),
+            rssiSlider: document.getElementById("slide-rssi"),
+            fusionScore: document.getElementById("fusion-score"),
+            targetPos: document.getElementById("target-pos"),
+            radNW: document.getElementById("rad-nw"),
+            radNE: document.getElementById("rad-ne"),
+            radSW: document.getElementById("rad-sw"),
+            radSE: document.getElementById("rad-se"),
+            confirmedNodes: document.getElementById("confirmed-nodes"),
+            viewModeNote: document.getElementById("view-mode-note")
+        };
+
+        const systemStatus = document.getElementById("system-status");
+        const nodeStateRefs = {
+            nw: { led: document.getElementById("led-nw"), text: document.getElementById("state-nw") },
+            ne: { led: document.getElementById("led-ne"), text: document.getElementById("state-ne") },
+            sw: { led: document.getElementById("led-sw"), text: document.getElementById("state-sw") },
+            se: { led: document.getElementById("led-se"), text: document.getElementById("state-se") }
+        };
+
+        let fusionWeight = Number(ui.fusionWeightSlider.value);
+        let trackingSmoothness = Number(ui.smoothSlider.value);
+        let rssiSensitivity = Number(ui.rssiSlider.value);
+
+        const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+        const fmt = (v) => Number(v).toFixed(2);
+        const nowSeconds = () => performance.now() * 0.001;
+        const getQuadrantFromPosition = (x, z) => {
+            if (x < 0 && z < 0) return "northwest";
+            if (x >= 0 && z < 0) return "northeast";
+            if (x < 0 && z >= 0) return "southwest";
+            return "southeast";
+        };
+
+        const setSliderReadouts = () => {
+            ui.fusionWeightValue.textContent = fusionWeight.toFixed(2);
+            ui.smoothValue.textContent = trackingSmoothness.toFixed(2);
+            ui.rssiValue.textContent = rssiSensitivity.toFixed(2);
+        };
+
+        ui.fusionWeightSlider.addEventListener("input", () => {
+            fusionWeight = Number(ui.fusionWeightSlider.value);
+            setSliderReadouts();
+        });
+
+        ui.smoothSlider.addEventListener("input", () => {
+            trackingSmoothness = Number(ui.smoothSlider.value);
+            setSliderReadouts();
+        });
+
+        ui.rssiSlider.addEventListener("input", () => {
+            rssiSensitivity = Number(ui.rssiSlider.value);
+            setSliderReadouts();
+        });
+
+        setSliderReadouts();
+
+        const wsPorts = [8766, 8765];
+        let socket = null;
+        let websocketConnected = false;
+        let lastTelemetryAt = 0;
+
+        const setNodeState = (key, stateText, colorClass) => {
+            const node = nodeStateRefs[key];
+            if (!node) return;
+            node.text.textContent = stateText;
+            node.led.classList.remove("green", "yellow", "red");
+            node.led.classList.add(colorClass);
+        };
+
+        const setAllNodesOffline = () => {
+            setNodeState("nw", "Offline", "red");
+            setNodeState("ne", "Offline", "red");
+            setNodeState("sw", "Offline", "red");
+            setNodeState("se", "Offline", "red");
+        };
+
+        setAllNodesOffline();
+
+        function connectWebSocket(index = 0) {
+            if (index >= wsPorts.length) {
+                websocketConnected = false;
+                systemStatus.textContent = "[ TELEMETRY OFFLINE ]";
+                systemStatus.style.color = "#da3633";
+                setTimeout(() => connectWebSocket(0), 2000);
+                return;
+            }
+
+            socket = new WebSocket(`ws://localhost:${wsPorts[index]}`);
+
+            socket.onopen = () => {
+                websocketConnected = true;
+                systemStatus.textContent = `[ LIVE TELEMETRY : ${wsPorts[index]} ]`;
+                systemStatus.style.color = "#40e0d0";
+            };
+
+            socket.onmessage = (event) => {
+                let msg;
+                try {
+                    msg = JSON.parse(event.data);
+                } catch (error) {
+                    return;
+                }
+
+                if (msg.protocol !== "invisible4eyes.telemetry") {
+                    return;
+                }
+
+                lastTelemetryAt = Date.now();
+
+                if (msg.type === "diagnostics_snapshot") {
+                    const payload = msg.payload || {};
+                    const nodes = payload.nodes || {};
+                    const connectedCount = Object.values(nodes).filter((node) => node.connected).length;
+                    if (connectedCount > 0) {
+                        systemStatus.textContent = `[ ${connectedCount}/4 NODES ACTIVE ]`;
+                        systemStatus.style.color = connectedCount >= 3 ? "#40e0d0" : "#d29922";
+                    }
+
+                    const nodeNameMap = {
+                        north: "ne",
+                        east: "nw",
+                        south: "sw",
+                        west: "se"
+                    };
+
+                    Object.entries(nodes).forEach(([name, meta]) => {
+                        const key = nodeNameMap[name];
+                        if (!key) return;
+                        const packetAge = Number(meta.last_packet_ms ?? -1);
+                        if (!meta.connected || packetAge < 0 || packetAge > 3000) {
+                            setNodeState(key, "Offline", "red");
+                        } else if (packetAge > 1200) {
+                            setNodeState(key, `Degraded (${packetAge} ms)`, "yellow");
+                        } else {
+                            setNodeState(key, `Active (${packetAge} ms)`, "green");
+                        }
+                    });
+                }
+
+                if (msg.type === "tracking_update") {
+                    const target = (msg.payload && msg.payload.targets && msg.payload.targets[0]) || null;
+                    if (!target) {
+                        return;
+                    }
+
+                    const radii = target.radii || {};
+                    updateFSSS(
+                        target.position[0],
+                        target.position[2],
+                        radii.northwest ?? 0,
+                        radii.northeast ?? 0,
+                        radii.southwest ?? 0,
+                        radii.southeast ?? 0
+                    );
+
+                    ui.confirmedNodes.textContent = (target.confirmed_nodes || []).map((node) => {
+                        if (node === "north") return "NE";
+                        if (node === "east") return "NW";
+                        if (node === "south") return "SW";
+                        if (node === "west") return "SE";
+                        return node;
+                    }).join(", ") || "-";
+                }
+            };
+
+            socket.onerror = () => {
+                try {
+                    socket.close();
+                } catch (error) {
+                    return;
+                }
+            };
+
+            socket.onclose = () => {
+                websocketConnected = false;
+                connectWebSocket(index + 1);
+            };
+        }
+
+        const container = document.getElementById("threejs-container");
+        const topViewButton = document.getElementById("btn-top-full");
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0c10);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 22, 28);
+        camera.lookAt(0, 2, 0);
+
+        const topCamera = new THREE.OrthographicCamera(-12, 12, 6, -6, 0.1, 120);
+        topCamera.position.set(0, 35, 0);
+        topCamera.up.set(0, 0, -1);
+        topCamera.lookAt(0, 0, 0);
+
+        let topViewEnabled = false;
+
+        const fallbackState = {
+            x: 0,
+            z: 0,
+            radii: { northwest: 0.1, northeast: 0.1, southwest: 0.1, southeast: 0.1 }
+        };
+        let occupiedQuadrant = null;
+        const quadrantIntensity = {
+            northwest: 0,
+            northeast: 0,
+            southwest: 0,
+            southeast: 0
+        };
+        const fallbackNodes = {
+            northwest: { x: -10, z: -5, color: "#ff4444", label: "NW" },
+            northeast: { x: 10, z: -5, color: "#4a90e2", label: "NE" },
+            southwest: { x: -10, z: 5, color: "#f5a623", label: "SW" },
+            southeast: { x: 10, z: 5, color: "#00c851", label: "SE" }
+        };
+        const fallbackTrail = [];
+
+        let renderer = null;
+        let webglReady = false;
+        let fallbackCanvas = null;
+        let fallbackCtx = null;
+
+        const getFallbackRoomRect = (width, height) => ({
+            x: width * 0.08,
+            y: height * 0.16,
+            w: width * 0.84,
+            h: height * 0.68
+        });
+
+        const worldToFallback = (x, z, width, height) => {
+            const room = getFallbackRoomRect(width, height);
+            const px = room.x + (((x + 10) / 20) * room.w);
+            const pz = room.y + (((z + 5) / 10) * room.h);
+            return { x: px, y: pz };
+        };
+
+        const fallbackRadiusToPx = (radius, width, height) => {
+            const room = getFallbackRoomRect(width, height);
+            return (radius / 20) * room.w;
+        };
+
+        const drawFallbackScene = () => {
+            if (!fallbackCtx || !fallbackCanvas) return;
+
+            const width = fallbackCanvas.width;
+            const height = fallbackCanvas.height;
+            fallbackCtx.clearRect(0, 0, width, height);
+            fallbackCtx.fillStyle = "#060a10";
+            fallbackCtx.fillRect(0, 0, width, height);
+
+            fallbackCtx.strokeStyle = "#2a3442";
+            fallbackCtx.lineWidth = 2;
+            fallbackCtx.strokeRect(1, 1, width - 2, height - 2);
+
+            const room = getFallbackRoomRect(width, height);
+            const roomLeft = room.x;
+            const roomTop = room.y;
+            const roomWidth = room.w;
+            const roomHeight = room.h;
+            const halfW = roomWidth / 2;
+            const halfH = roomHeight / 2;
+
+            const zoneRects = {
+                northwest: { x: roomLeft, y: roomTop, w: halfW, h: halfH },
+                northeast: { x: roomLeft + halfW, y: roomTop, w: halfW, h: halfH },
+                southwest: { x: roomLeft, y: roomTop + halfH, w: halfW, h: halfH },
+                southeast: { x: roomLeft + halfW, y: roomTop + halfH, w: halfW, h: halfH }
+            };
+
+            Object.entries(zoneRects).forEach(([id, rect]) => {
+                const intensity = clamp(quadrantIntensity[id] || 0, 0, 1);
+                if (intensity <= 0.01) return;
+                const pulse = id === occupiedQuadrant ? (0.76 + 0.24 * Math.sin(nowSeconds() * 8.5)) : 0.72;
+                const alpha = clamp(0.10 + (0.40 * intensity * pulse), 0, 0.55);
+                fallbackCtx.fillStyle = `rgba(255, 56, 56, ${alpha.toFixed(3)})`;
+                fallbackCtx.fillRect(rect.x, rect.y, rect.w, rect.h);
+            });
+
+            fallbackCtx.strokeStyle = "#8be9fd";
+            fallbackCtx.lineWidth = 2;
+            fallbackCtx.strokeRect(roomLeft, roomTop, roomWidth, roomHeight);
+
+            fallbackCtx.strokeStyle = "rgba(139, 233, 253, 0.28)";
+            fallbackCtx.lineWidth = 1;
+            fallbackCtx.beginPath();
+            fallbackCtx.moveTo(roomLeft + halfW, roomTop);
+            fallbackCtx.lineTo(roomLeft + halfW, roomTop + roomHeight);
+            fallbackCtx.moveTo(roomLeft, roomTop + halfH);
+            fallbackCtx.lineTo(roomLeft + roomWidth, roomTop + halfH);
+            fallbackCtx.stroke();
+
+            Object.entries(fallbackNodes).forEach(([id, node]) => {
+                const p = worldToFallback(node.x, node.z, width, height);
+                const radiusPx = fallbackRadiusToPx(Math.max(0.1, fallbackState.radii[id]), width, height);
+                fallbackCtx.strokeStyle = `${node.color}88`;
+                fallbackCtx.lineWidth = 1.5;
+                fallbackCtx.beginPath();
+                fallbackCtx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+                fallbackCtx.stroke();
+
+                fallbackCtx.fillStyle = node.color;
+                fallbackCtx.beginPath();
+                fallbackCtx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                fallbackCtx.fill();
+
+                fallbackCtx.fillStyle = "#c9d1d9";
+                fallbackCtx.font = "12px Segoe UI";
+                fallbackCtx.fillText(node.label, p.x + 8, p.y - 8);
+            });
+
+            const tp = worldToFallback(fallbackState.x, fallbackState.z, width, height);
+
+            fallbackTrail.forEach((sample) => {
+                const p = worldToFallback(sample.x, sample.z, width, height);
+                const alpha = clamp(sample.life, 0, 1) * 0.28;
+                const radius = 3 + ((1 - sample.life) * 5);
+                fallbackCtx.fillStyle = `rgba(255, 59, 48, ${alpha.toFixed(3)})`;
+                fallbackCtx.beginPath();
+                fallbackCtx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                fallbackCtx.fill();
+            });
+
+            fallbackCtx.fillStyle = "#ff3b30";
+            fallbackCtx.beginPath();
+            fallbackCtx.arc(tp.x, tp.y, 7, 0, Math.PI * 2);
+            fallbackCtx.fill();
+        };
+
+        const resizeFallbackCanvas = () => {
+            if (!fallbackCanvas) return;
+            fallbackCanvas.width = Math.max(320, container.clientWidth);
+            fallbackCanvas.height = Math.max(220, container.clientHeight);
+            drawFallbackScene();
+        };
+
+        const initFallbackCanvas = () => {
+            fallbackCanvas = document.createElement("canvas");
+            fallbackCanvas.style.width = "100%";
+            fallbackCanvas.style.height = "100%";
+            fallbackCanvas.style.display = "block";
+            fallbackCanvas.style.background = "#05080d";
+            container.appendChild(fallbackCanvas);
+            fallbackCtx = fallbackCanvas.getContext("2d");
+            resizeFallbackCanvas();
+            systemStatus.textContent = "[ WEBGL OFF | 2D TOPSIDE MODE ]";
+            systemStatus.style.color = "#d29922";
+        };
+
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            webglReady = true;
+        } catch (error) {
+            webglReady = false;
+            initFallbackCanvas();
+        }
+
+        const updateTopCameraFrustum = (w, h) => {
+            const safeW = Math.max(w, 1);
+            const safeH = Math.max(h, 1);
+            const aspect = safeW / safeH;
+            const halfHeight = 11;
+            const halfWidth = halfHeight * aspect;
+            topCamera.left = -halfWidth;
+            topCamera.right = halfWidth;
+            topCamera.top = halfHeight;
+            topCamera.bottom = -halfHeight;
+            topCamera.updateProjectionMatrix();
+        };
+
+        const setTopViewMode = (enabled) => {
+            topViewEnabled = enabled;
+            topViewButton.textContent = enabled ? "Switch To Office View" : "Switch To Topside View";
+            if (ui.viewModeNote) {
+                if (webglReady) {
+                    ui.viewModeNote.textContent = enabled
+                        ? "Topside mode: same 3D scene from overhead."
+                        : "Office mode: 3D office + FSSS spheres + red floor pulse.";
+                } else {
+                    ui.viewModeNote.textContent = enabled
+                        ? "Topside mode in this tab is running 2D fallback (WebGL unavailable)."
+                        : "Office mode in this tab is running 2D fallback (WebGL unavailable).";
+                }
+            }
+
+            if (!webglReady) {
+                requestAnimationFrame(() => {
+                    resizeFallbackCanvas();
+                });
+                return;
+            }
+
+            updateTopCameraFrustum(container.clientWidth, container.clientHeight);
+        };
+
+        topViewButton.addEventListener("click", () => {
+            setTopViewMode(!topViewEnabled);
+        });
+
+        setTopViewMode(false);
+        updateTopCameraFrustum(container.clientWidth, container.clientHeight);
+
+        const skeletonMat = new THREE.LineBasicMaterial({ color: 0x40e0d0, transparent: true, opacity: 0.55 });
+
+        const roomSkeleton = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(20, 10, 10)),
+            skeletonMat
+        );
+        roomSkeleton.position.set(0, 5, 0);
+        scene.add(roomSkeleton);
+
+        const floorOutline = new THREE.LineLoop(
+            new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-10, 0, -5),
+                new THREE.Vector3(10, 0, -5),
+                new THREE.Vector3(10, 0, 5),
+                new THREE.Vector3(-10, 0, 5)
+            ]),
+            new THREE.LineBasicMaterial({ color: 0x8be9fd, transparent: true, opacity: 0.75 })
+        );
+        scene.add(floorOutline);
+
+        const quadrantTiles = {};
+        const quadrantSpecs = [
+            { id: "northwest", x: -5, z: -2.5 },
+            { id: "northeast", x: 5, z: -2.5 },
+            { id: "southwest", x: -5, z: 2.5 },
+            { id: "southeast", x: 5, z: 2.5 }
+        ];
+
+        quadrantSpecs.forEach((spec) => {
+            const tile = new THREE.Mesh(
+                new THREE.PlaneGeometry(10, 5),
+                new THREE.MeshBasicMaterial({
+                    color: 0xff3030,
+                    transparent: true,
+                    opacity: 0.0,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                })
+            );
+            tile.rotation.x = -Math.PI / 2;
+            tile.position.set(spec.x, 0.015, spec.z);
+            scene.add(tile);
+            quadrantTiles[spec.id] = tile;
+        });
+
+        const beaconTrail = [];
+        let lastTrailDropAt = 0;
+        let previousTrailPoint = null;
+
+        const updateQuadrantOccupancy = (quadrantId) => {
+            occupiedQuadrant = quadrantId;
+            if (quadrantId && quadrantIntensity[quadrantId] !== undefined) {
+                quadrantIntensity[quadrantId] = 1;
+            }
+        };
+
+        const dropBeaconTrailPoint = (x, y, z) => {
+            const t = nowSeconds();
+            const distanceOk = !previousTrailPoint || Math.hypot(x - previousTrailPoint.x, z - previousTrailPoint.z) > 0.22;
+            const timeOk = (t - lastTrailDropAt) > 0.05;
+            if (!distanceOk || !timeOk) return;
+
+            previousTrailPoint = { x, z };
+            lastTrailDropAt = t;
+
+            if (webglReady) {
+                const trailDot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.18, 10, 10),
+                    new THREE.MeshBasicMaterial({ color: 0xff3b30, transparent: true, opacity: 0.34 })
+                );
+                trailDot.position.set(x, y, z);
+                scene.add(trailDot);
+                beaconTrail.push({ mesh: trailDot, life: 1.0 });
+            } else {
+                fallbackTrail.push({ x, z, life: 1.0 });
+            }
+        };
+
+        const clearTemporalVisuals = () => {
+            occupiedQuadrant = null;
+            Object.keys(quadrantIntensity).forEach((k) => {
+                quadrantIntensity[k] = 0;
+            });
+            beaconTrail.forEach((entry) => {
+                if (entry.mesh) {
+                    scene.remove(entry.mesh);
+                    entry.mesh.geometry.dispose();
+                    entry.mesh.material.dispose();
+                }
+            });
+            beaconTrail.length = 0;
+            fallbackTrail.length = 0;
+            previousTrailPoint = null;
+        };
+
+        const createTextSprite = (text, colorHex) => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "rgba(10, 14, 21, 0.72)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "#30363d";
+            ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+            ctx.font = "bold 34px Segoe UI";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = `#${colorHex.toString(16).padStart(6, "0")}`;
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(3.4, 0.85, 1);
+            return sprite;
+        };
+
+        const gridHelper = new THREE.GridHelper(20, 20, 0x40e0d0, 0x30363d);
+        gridHelper.scale.set(1, 1, 0.5);
+        scene.add(gridHelper);
+
+        const roomGeometry = new THREE.BoxGeometry(20, 10, 10);
+        const roomMaterial = new THREE.MeshBasicMaterial({
+            color: 0x30363d,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15
+        });
+        const room = new THREE.Mesh(roomGeometry, roomMaterial);
+        room.position.set(0, 5, 0);
+        scene.add(room);
+
+        const nodes = {};
+        const fsssSpheres = {};
+        const beamLines = {};
+        const floorFootprints = {};
+        const nodeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const sphereGeometry = new THREE.SphereGeometry(1, 16, 16);
+
+        const nodeConfigs = [
+            { id: "northwest", name: "NW Kingsman", x: -10, y: 9, z: -5, color: 0xff4444 },
+            { id: "northeast", name: "NE Gilligan", x: 10, y: 9, z: -5, color: 0x4a90e2 },
+            { id: "southwest", name: "SW Gadget", x: -10, y: 9, z: 5, color: 0xf5a623 },
+            { id: "southeast", name: "SE Green Matrix", x: 10, y: 9, z: 5, color: 0x00c851 }
+        ];
+
+        nodeConfigs.forEach((config) => {
+            const material = new THREE.MeshBasicMaterial({ color: config.color });
+            const node = new THREE.Mesh(nodeGeometry, material);
+            node.position.set(config.x, config.y, config.z);
+            scene.add(node);
+            nodes[config.id] = node;
+
+            const sphereMat = new THREE.MeshBasicMaterial({
+                color: config.color,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.25
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMat);
+            sphere.position.set(config.x, config.y, config.z);
+            scene.add(sphere);
+            fsssSpheres[config.id] = sphere;
+
+            const label = createTextSprite(config.name, config.color);
+            label.position.set(config.x, config.y + 0.9, config.z);
+            scene.add(label);
+
+            const beamGeometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(config.x, config.y, config.z),
+                new THREE.Vector3(0, 3, 0)
+            ]);
+            const beam = new THREE.Line(
+                beamGeometry,
+                new THREE.LineBasicMaterial({ color: config.color, transparent: true, opacity: 0.95 })
+            );
+            scene.add(beam);
+            beamLines[config.id] = beam;
+
+            const footprint = new THREE.LineLoop(
+                new THREE.BufferGeometry(),
+                new THREE.LineBasicMaterial({ color: config.color, transparent: true, opacity: 0.5 })
+            );
+            scene.add(footprint);
+            floorFootprints[config.id] = footprint;
+        });
+
+        const targetGeometry = new THREE.SphereGeometry(0.6, 16, 16);
+        const targetMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const liveBeacon = new THREE.Mesh(targetGeometry, targetMaterial);
+        liveBeacon.position.set(0, 3, 0);
+        scene.add(liveBeacon);
+
+        const updateBeamLines = () => {
+            Object.entries(beamLines).forEach(([id, beam]) => {
+                const p0 = nodes[id].position;
+                const p1 = liveBeacon.position;
+                beam.geometry.setFromPoints([
+                    new THREE.Vector3(p0.x, p0.y, p0.z),
+                    new THREE.Vector3(p1.x, p1.y, p1.z)
+                ]);
+            });
+        };
+
+        const updateFloorFootprint = (id, radiusFt) => {
+            const center = nodes[id].position;
+            const radius = clamp(radiusFt, 0.1, 30);
+            const segments = 56;
+            const points = [];
+            for (let i = 0; i < segments; i += 1) {
+                const t = (i / segments) * Math.PI * 2;
+                points.push(new THREE.Vector3(center.x + Math.cos(t) * radius, 0.02, center.z + Math.sin(t) * radius));
+            }
+            floorFootprints[id].geometry.dispose();
+            floorFootprints[id].geometry = new THREE.BufferGeometry().setFromPoints(points);
+        };
+
+        const updateTelemetryPanel = (radiiByNode) => {
+            const entries = Object.entries(radiiByNode).map(([id, radius]) => {
+                const nodePos = nodes[id].position;
+                const dist = liveBeacon.position.distanceTo(nodePos);
+                const safeRadius = Math.max(0.1, radius);
+                const agreement = clamp(1 - Math.abs(dist - safeRadius) / safeRadius, 0, 1);
+                return { id, radius, dist, agreement };
+            });
+
+            const activeCount = entries.filter((e) => e.radius > 0.1).length;
+            const avgAgreement = entries.reduce((sum, e) => sum + e.agreement, 0) / entries.length;
+            const top = [...entries].sort((a, b) => b.agreement - a.agreement).slice(0, 3);
+            const topAvg = top.reduce((sum, e) => sum + e.agreement, 0) / top.length;
+
+            const fusionScore = clamp(
+                (topAvg * fusionWeight) + ((activeCount / 4) * (1 - fusionWeight)),
+                0,
+                1
+            );
+
+            ui.fusionScore.textContent = `${Math.round(fusionScore * 100)}%`;
+            ui.targetPos.textContent = `x:${fmt(liveBeacon.position.x)} y:${fmt(liveBeacon.position.y)} z:${fmt(liveBeacon.position.z)}`;
+            ui.radNW.textContent = `${fmt(radiiByNode.northwest)} ft`;
+            ui.radNE.textContent = `${fmt(radiiByNode.northeast)} ft`;
+            ui.radSW.textContent = `${fmt(radiiByNode.southwest)} ft`;
+            ui.radSE.textContent = `${fmt(radiiByNode.southeast)} ft`;
+            ui.confirmedNodes.textContent = top.map((e) => e.id.replace("north", "N").replace("south", "S").replace("east", "E").replace("west", "W")).join(", ");
+        };
+
+        const updateFallbackTelemetryPanel = (targetX, targetZ, radiiByNode) => {
+            const nodeCoords = {
+                northwest: { x: -10, z: -5 },
+                northeast: { x: 10, z: -5 },
+                southwest: { x: -10, z: 5 },
+                southeast: { x: 10, z: 5 }
+            };
+
+            const entries = Object.entries(radiiByNode).map(([id, radius]) => {
+                const node = nodeCoords[id];
+                const dist = Math.hypot(targetX - node.x, targetZ - node.z);
+                const safeRadius = Math.max(0.1, radius);
+                const agreement = clamp(1 - Math.abs(dist - safeRadius) / safeRadius, 0, 1);
+                return { id, radius, agreement };
+            });
+
+            const activeCount = entries.filter((e) => e.radius > 0.1).length;
+            const top = [...entries].sort((a, b) => b.agreement - a.agreement).slice(0, 3);
+            const topAvg = top.reduce((sum, e) => sum + e.agreement, 0) / Math.max(1, top.length);
+            const fusionScore = clamp((topAvg * fusionWeight) + ((activeCount / 4) * (1 - fusionWeight)), 0, 1);
+
+            ui.fusionScore.textContent = `${Math.round(fusionScore * 100)}%`;
+            ui.targetPos.textContent = `x:${fmt(targetX)} y:3.00 z:${fmt(targetZ)}`;
+            ui.radNW.textContent = `${fmt(radiiByNode.northwest)} ft`;
+            ui.radNE.textContent = `${fmt(radiiByNode.northeast)} ft`;
+            ui.radSW.textContent = `${fmt(radiiByNode.southwest)} ft`;
+            ui.radSE.textContent = `${fmt(radiiByNode.southeast)} ft`;
+            ui.confirmedNodes.textContent = top.map((e) => e.id.replace("north", "N").replace("south", "S").replace("east", "E").replace("west", "W")).join(", ");
+        };
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const pulse = 0.76 + (0.24 * Math.sin(nowSeconds() * 8.5));
+
+            Object.entries(quadrantTiles).forEach(([id, tile]) => {
+                const intensity = clamp(quadrantIntensity[id] || 0, 0, 1);
+                if (!tile || !tile.material) return;
+                const activePulse = id === occupiedQuadrant ? pulse : 0.72;
+                tile.material.opacity = clamp(0.02 + (0.30 * intensity * activePulse), 0, 0.36);
+                quadrantIntensity[id] = Math.max(0, intensity - 0.007);
+            });
+
+            for (let i = beaconTrail.length - 1; i >= 0; i -= 1) {
+                const entry = beaconTrail[i];
+                entry.life -= 0.022;
+                if (entry.life <= 0) {
+                    scene.remove(entry.mesh);
+                    entry.mesh.geometry.dispose();
+                    entry.mesh.material.dispose();
+                    beaconTrail.splice(i, 1);
+                    continue;
+                }
+                entry.mesh.material.opacity = clamp(0.34 * entry.life, 0, 0.34);
+                entry.mesh.scale.setScalar(0.6 + ((1 - entry.life) * 0.9));
+            }
+
+            for (let i = fallbackTrail.length - 1; i >= 0; i -= 1) {
+                fallbackTrail[i].life -= 0.018;
+                if (fallbackTrail[i].life <= 0) {
+                    fallbackTrail.splice(i, 1);
+                }
+            }
+
+            Object.values(fsssSpheres).forEach((sphere) => {
+                sphere.rotation.x += 0.001;
+                sphere.rotation.y += 0.002;
+            });
+
+            updateBeamLines();
+
+            const mainWidth = container.clientWidth;
+            const mainHeight = container.clientHeight;
+
+            if (!webglReady) {
+                drawFallbackScene();
+                return;
+            }
+
+            renderer.setViewport(0, 0, mainWidth, mainHeight);
+            renderer.setScissorTest(false);
+
+            if (topViewEnabled) {
+                renderer.render(scene, topCamera);
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.addEventListener("resize", () => {
+            if (!webglReady) {
+                resizeFallbackCanvas();
+                return;
+            }
+
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            updateTopCameraFrustum(container.clientWidth, container.clientHeight);
+        });
+
+        animate();
+
+        setInterval(() => {
+            const staleMs = Date.now() - lastTelemetryAt;
+            if (!websocketConnected || staleMs > 3000) {
+                systemStatus.textContent = "[ TELEMETRY OFFLINE ]";
+                systemStatus.style.color = "#da3633";
+                setAllNodesOffline();
+                clearTemporalVisuals();
+            }
+        }, 1000);
+
+        function updateFSSS(targetX, targetZ, radiusNW, radiusNE, radiusSW, radiusSE) {
+            const smoothing = clamp(trackingSmoothness, 0.01, 0.95);
+            const alpha = 1 - smoothing;
+
+            if (!webglReady) {
+                fallbackState.x += (targetX - fallbackState.x) * alpha;
+                fallbackState.z += (targetZ - fallbackState.z) * alpha;
+                updateQuadrantOccupancy(getQuadrantFromPosition(fallbackState.x, fallbackState.z));
+                dropBeaconTrailPoint(fallbackState.x, 0, fallbackState.z);
+            }
+
+            if (webglReady) {
+                liveBeacon.position.x += (targetX - liveBeacon.position.x) * alpha;
+                liveBeacon.position.z += (targetZ - liveBeacon.position.z) * alpha;
+                updateQuadrantOccupancy(getQuadrantFromPosition(liveBeacon.position.x, liveBeacon.position.z));
+                dropBeaconTrailPoint(liveBeacon.position.x, liveBeacon.position.y, liveBeacon.position.z);
+            }
+
+            const scaleNW = Math.max(0.1, radiusNW * rssiSensitivity);
+            const scaleNE = Math.max(0.1, radiusNE * rssiSensitivity);
+            const scaleSW = Math.max(0.1, radiusSW * rssiSensitivity);
+            const scaleSE = Math.max(0.1, radiusSE * rssiSensitivity);
+
+            if (!webglReady) {
+                fallbackState.radii = {
+                    northwest: scaleNW,
+                    northeast: scaleNE,
+                    southwest: scaleSW,
+                    southeast: scaleSE
+                };
+                updateFallbackTelemetryPanel(fallbackState.x, fallbackState.z, fallbackState.radii);
+                drawFallbackScene();
+                return;
+            }
+
+            if (fsssSpheres.northwest) {
+                fsssSpheres.northwest.scale.set(scaleNW, scaleNW, scaleNW);
+                updateFloorFootprint("northwest", scaleNW);
+            }
+            if (fsssSpheres.northeast) {
+                fsssSpheres.northeast.scale.set(scaleNE, scaleNE, scaleNE);
+                updateFloorFootprint("northeast", scaleNE);
+            }
+            if (fsssSpheres.southwest) {
+                fsssSpheres.southwest.scale.set(scaleSW, scaleSW, scaleSW);
+                updateFloorFootprint("southwest", scaleSW);
+            }
+            if (fsssSpheres.southeast) {
+                fsssSpheres.southeast.scale.set(scaleSE, scaleSE, scaleSE);
+                updateFloorFootprint("southeast", scaleSE);
+            }
+
+            updateTelemetryPanel({
+                northwest: scaleNW,
+                northeast: scaleNE,
+                southwest: scaleSW,
+                southeast: scaleSE
+            });
+        }
+
+        window.updateFSSS = updateFSSS;
+
+        // Connect after visualization and handlers are fully initialized.
+        connectWebSocket();
+
+    </script>
+</body>
+</html>
